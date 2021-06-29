@@ -30,6 +30,6 @@ class JSPath(StreamingCommand):
 
     def target(self, event, pipeline):
         for field, expr in self.fields.items():
-            matches = expr.find(event.data)
-            field.write(event.data, len(matches) == 1 and matches[0].value or [m.value for m in matches] )
+            matches = expr.find(event['data'])
+            field.write(event['data'], len(matches) == 1 and matches[0].value or [m.value for m in matches] )
         return event

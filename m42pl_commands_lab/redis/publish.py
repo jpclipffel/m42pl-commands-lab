@@ -19,6 +19,6 @@ class Command(Common, StreamingCommand):
     
     async def target(self, event, pipeline):
         client = await self.get_client()
-        channel = self.channel.read(event.data)
-        await client.publish_json(channel, event.data)
+        channel = self.channel.read(event['data'])
+        await client.publish_json(channel, event['data'])
         yield event

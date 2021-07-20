@@ -1,5 +1,5 @@
-# Websocket support
-from .wsock import send, receive
+# Websocket
+from . import wsock
 
 # PIL
 from . import image

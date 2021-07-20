@@ -7,14 +7,14 @@ from m42pl.fields import Field
 class CV2Show(StreamingCommand):
     _aliases_   = ['cv2_show',]
 
-    def __init__(self, field: str = "cv2.frame"):
+    def __init__(self, field: str = 'cv2.frame'):
         super().__init__(field)
         self.field = Field(field)
     
     async def target(self, event, pipeline):
         try:
             cv2.imshow('Camera', await self.field.read(event, pipeline))
-            cv2.waitKey(10)
+            cv2.waitKey(1)
         except Exception as error:
             self.logger.exception(error)
         yield event

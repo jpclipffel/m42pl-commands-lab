@@ -11,6 +11,9 @@ setup(
     'm42pl',
     'm42pl_commands',
     # ---
-    'Pillow'
+    'Pillow',
+    'selenium',
+    'mediapipe',
+    'opencv-contrib-python'
   ]
 )

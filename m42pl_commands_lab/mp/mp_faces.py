@@ -10,6 +10,8 @@ class MPFaces(StreamingCommand):
     """
     
     _aliases_   = ['mp_faces', 'mp_face']
+    _about_     = 'Detects faces'
+    _syntax_    = '[[frame=]{source frame}]'
 
     def __init__(self, field: str = 'cv2.frame'):
         super().__init__(field)

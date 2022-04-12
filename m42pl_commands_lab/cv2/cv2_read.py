@@ -14,6 +14,23 @@ class CV2Read(GeneratingCommand):
     _syntax_    = '[source=]{source device} [[retries=]<retries count>]'
     _about_     = 'Read a stream with OpenCV'
 
+    _schema_ = {
+        'properties': {
+            'cv2': {
+                'type': 'object',
+                'properties': {
+                    'frame': {
+                        'description': 'Read frame'
+                    },
+                    'source': {
+                        'description': 'Source stream name',
+                        'type': 'string'
+                    }
+                }
+            }
+        }
+    }
+
     def __init__(self, source: str|int = 0, retries: int = -1):
         """
         :param source:  Source stream

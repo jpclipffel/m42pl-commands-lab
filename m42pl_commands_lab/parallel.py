@@ -1,29 +1,27 @@
 from collections import OrderedDict
 from textwrap import dedent
-
 import asyncio
 
-from m42pl.commands import GeneratingCommand
-from m42pl.pipeline import Pipeline
+from m42pl.commands import StreamingCommand
+from m42pl.pipeline import InfiniteRunner
 from m42pl.fields import Field
+from m42pl.event import derive
 
 
-class Parallel(GeneratingCommand):
-    """Runs multiple sub-pipeline in parallel using `asyncio`.
-
-    This primitive implementation relies on this SO answers:
-    stackoverflow.com/questions/55299564
+class Parallel(StreamingCommand):
+    """Runs multiple sub-pipelines using `asyncio`.
     """
 
-    _about_     = 'Run multiple sub-pipelines in parallel'
+    _about_     = 'Run multiple sub-pipelines'
     _syntax_    = '<pipeline> [, ...]'
-    _aliases_   = ['parallel', 'parallel_queue']
-    _grammar_   = OrderedDict(GeneratingCommand._grammar_)
+    _aliases_   = ['parallel',]
+    _schema_    = {'properties': {}}
+    _grammar_   = OrderedDict(StreamingCommand._grammar_)
     _grammar_['start'] = dedent('''\
         start : piperef (","? piperef)*
     ''')
 
-    class Transformer(GeneratingCommand.Transformer):
+    class Transformer(StreamingCommand.Transformer):
         def start(self, items):
             return (), {'pipelines': items}
 
@@ -32,24 +30,35 @@ class Parallel(GeneratingCommand):
         :param pipelines:   Pipelines ID
         """
         super().__init__(pipelines)
+        self.runners = []
         self.pipelines = Field(pipelines)
+
+    async def setup(self, event, pipeline):
+        for piperef in self.pipelines.name:
+            # Get pipeline reference
+            _pipeline = pipeline.context.pipelines[piperef.name]
+            # Add pipeline to new runner
+            self.runners.append(InfiniteRunner(
+                _pipeline,
+                pipeline.context,
+                event
+            ))
+            # Setup latest added runner
+            await self.runners[-1].setup()
 
     async def target(self, event, pipeline):
 
-        async def drain(aiter):
-            async for item in aiter(event):
+        async def drain(runner):
+            """Runs a pipeline 'runner' (...).
+            """
+            async for item in runner(derive(event)):
                 await queue.put(item)
 
         queue = asyncio.Queue(1)
         tasks = [
-            asyncio.create_task(drain(piperef))
-            for piperef
-            in [
-                pipeline.context.pipelines.get(p.name)
-                for p
-                in self.pipelines.name
-            ]
+            asyncio.create_task(drain(runner))
+            for runner
+            in self.runners
         ]
-
         while not all(task.done() for task in tasks):
             yield await queue.get()
